@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Alerjilerim</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h3 {
+            background-color: #4caf50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin: 0;
+        }
+
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        table tbody tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        table tbody tr:hover {
+            background-color: #eaf4e2;
+        }
+
+        #errorMessage {
+            text-align: center;
+            color: red;
+            font-weight: bold;
+        }
+
+        p {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<h3>Alerjilerim</h3>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Alerji Adı</th>
+        <th>Kod</th>
+    </tr>
+    </thead>
+    <tbody id="allergyBody">
+    <tr><td colspan="3">Yükleniyor...</td></tr>
+    </tbody>
+</table>
+
+<p id="errorMessage"></p>
+
+<script>
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "static/login.html";
+
+    
+    function getUserIdFromToken() {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.id;
+    }
+
+    fetch(`http://localhost:8080/allergies/getByPatient`, {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Alerjiler alınamadı.");
+        return res.json();
+    })
+    .then(allergies => {
+        const tbody = document.getElementById("allergyBody");
+        tbody.innerHTML = "";
+
+        if (allergies.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3">Alerji kaydınız bulunmamaktadır.</td></tr>`;
+            return;
+        }
+
+        allergies.forEach(a => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${a.id}</td>
+                    <td>${a.name}</td>
+                    <td>${a.code}</td>
+                </tr>
+            `;
+        });
+    })
+    .catch(err => {
+        document.getElementById("errorMessage").innerText = err.message;
+    });
+</script>
+</body>
+</html>
